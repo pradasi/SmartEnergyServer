@@ -1,6 +1,6 @@
 # SmartEnergyServer
 This project is server for Smart Energy Project \
-It is written in c# using ASP.NET framework for web and api \  
+It is written in c# using ASP.NET framework for web and api 
 It also contains python for machine learning and web scraping
 
 1. Dependencies:\
