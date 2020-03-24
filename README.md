@@ -1,0 +1,2 @@
+# SmartEnergyServer
+.net server 
