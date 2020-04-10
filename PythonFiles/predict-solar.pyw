@@ -8,6 +8,8 @@ from sklearn.preprocessing import MinMaxScaler
 from numpy import concatenate
 #to concat two numpy array
 from numpy import column_stack
+#to convert to json
+import json
 
 try:
 	
@@ -18,9 +20,6 @@ try:
 	prevSolarData = data.values[:,-2]
 	solarEnergy = data.values[:,-1]
 	
-	print(prevSolarData)
-	print(solarEnergy)
-
 	#preparing to scale
 	scaler = MinMaxScaler(feature_range=(0,1))
 
@@ -63,10 +62,8 @@ try:
 
 	preditctedSolarData['FullHour'] = indexDate[0]
 	preditctedSolarData['Hour'] = dateHour
-	preditctedSolarData['SolarIrradiance'] = solarEnergy.tolist()
+	preditctedSolarData['value'] = solarEnergy.tolist()
 	
-	import json
-
 	myJson = json.dumps(preditctedSolarData)
 	print(myJson)
     

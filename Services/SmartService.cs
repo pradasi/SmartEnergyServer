@@ -1,7 +1,6 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
-using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 using SmartEnergy.ConfigClass;
 using SmartEnergy.ContractClass;
@@ -44,20 +43,20 @@ namespace SmartEnergy.Services
             }
         }
 
-        public WeatherData GetCurrentWeather()
+        public CurrentWeatherData GetCurrentWeather()
         {
-            return JsonConvert.DeserializeObject<WeatherData>(PythonExecuter(pythonFile.currentWeatherdata));
+            return JsonConvert.DeserializeObject<CurrentWeatherData>(PythonExecuter(pythonFile.currentWeatherdata));
         }
 
-        public string Predict(string modelName)
+        public PredictedData Predict(string modelName)
         {
             if(modelName.ToLower() == forSolar)
             {
-                return PredictSolarEnergy();
+                return JsonConvert.DeserializeObject<PredictedData>(PredictSolarEnergy());
             }
             if (modelName.ToLower() == forWind)
             {
-                return PredictWind();
+                return JsonConvert.DeserializeObject<PredictedData>(PredictWind());
             } 
             else
             {
@@ -78,8 +77,16 @@ namespace SmartEnergy.Services
         public string GetWeatherForecast()
         {
             return PythonExecuter(pythonFile.weatherReport);
-
         }
 
+        public DailyWeather HourlyWeatherData()
+        {
+            return JsonConvert.DeserializeObject<DailyWeather>(PythonExecuter(pythonFile.hourlyWeatherData));
+        }
+
+        public IEnumerable<WeeklyWeather> WeeklyWeatherData()
+        {
+            return JsonConvert.DeserializeObject<IEnumerable<WeeklyWeather>>(PythonExecuter(pythonFile.weeklyWeatherData));
+        }
     }
 }

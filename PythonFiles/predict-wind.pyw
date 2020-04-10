@@ -10,6 +10,8 @@ from sklearn.preprocessing import MinMaxScaler
 from numpy import concatenate
 #to concat two numpy array
 from numpy import column_stack
+#to convert to json
+import json
 
 try:
 	#reading the data
@@ -64,10 +66,8 @@ try:
 		 dateHour.append(date.split(':')[0])
 	
 	preditctedWindData['FullHour'] = indexDate[0]
-	preditctedWindData['Hour'] = dateHour
-	preditctedWindData['WindSpeed'] = inv_yhat.tolist()
-
-	import json
+	preditctedWindData['Hour'] = dateHour[:-1]
+	preditctedWindData['value'] = inv_yhat.tolist()
 
 	myJson = json.dumps(preditctedWindData)
 	print(myJson)
