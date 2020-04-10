@@ -41,16 +41,11 @@ namespace SmartEnergy.Controllers
             return smartService.GetCurrentWeather();
         }
 
-        [HttpGet("predict-wind-speed")]
-        public ActionResult<string> PredictWindSpeed()
-        {
-            return smartService.PredictWind();
-        }
 
-        [HttpGet("predict-solar-energy")]
-        public ActionResult<string> PredictSolarEnergy()
+        [HttpGet("predict/{modelName}")]
+        public IActionResult PredictModel(string modelName)
         {
-            return smartService.PredictSolarEnergy();
+            return Ok(smartService.Predict(modelName));
         }
     }
 }

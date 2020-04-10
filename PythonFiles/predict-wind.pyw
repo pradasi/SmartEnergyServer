@@ -13,7 +13,7 @@ from numpy import column_stack
 
 try:
 	#reading the data
-	data = read_csv('PythonFiles\weatherForecast.csv', header=0, index_col=0)
+	data = read_csv('PythonFiles\weatherForecastForWind.csv', header=0, index_col=0)
 
 	#separarting the data
 	featuresUsedToPredict = data.values[1:,:-1]
@@ -53,15 +53,19 @@ try:
 	inv_yhat = inv_yhat[:,-1]
 
 	#extracting the index dates for json
-	indexDate = data.index[1:].to_list()
+	indexDate = data.index.to_list()
 
 	#initilizing dictionary
 	preditctedWindData = {}
+	dateHour = []
 
 	#enumerating and appending
 	for i,date in enumerate(indexDate):
-		dateNew = date.split(' ')[1]
-		preditctedWindData[dateNew] = inv_yhat[i]
+		 dateHour.append(date.split(':')[0])
+	
+	preditctedWindData['FullHour'] = indexDate[0]
+	preditctedWindData['Hour'] = dateHour
+	preditctedWindData['WindSpeed'] = inv_yhat.tolist()
 
 	import json
 

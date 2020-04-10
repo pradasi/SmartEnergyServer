@@ -1,5 +1,7 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.IO;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using SmartEnergy.ConfigClass;
 using SmartEnergy.ContractClass;
@@ -11,6 +13,8 @@ namespace SmartEnergy.Services
         private readonly string directory;
         private PythonFile pythonFile;
         private DirectorySetup directorySetup;
+        private string forSolar = "solar";
+        private string forWind = "wind";
         public SmartService(PythonFile pyFile, DirectorySetup dirSetup)
         {
             pythonFile = pyFile;
@@ -45,12 +49,28 @@ namespace SmartEnergy.Services
             return JsonConvert.DeserializeObject<WeatherData>(PythonExecuter(pythonFile.currentWeatherdata));
         }
 
-        public string PredictSolarEnergy()
+        public string Predict(string modelName)
+        {
+            if(modelName.ToLower() == forSolar)
+            {
+                return PredictSolarEnergy();
+            }
+            if (modelName.ToLower() == forWind)
+            {
+                return PredictWind();
+            } 
+            else
+            {
+                return null;
+            }
+        }
+
+        private string PredictSolarEnergy()
         {
             return PythonExecuter(pythonFile.solarModel);
         }
 
-        public string PredictWind()
+        private string PredictWind()
         {
             return PythonExecuter(pythonFile.windModel);
         }
