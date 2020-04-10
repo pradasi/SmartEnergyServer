@@ -10,10 +10,12 @@ from sklearn.preprocessing import MinMaxScaler
 from numpy import concatenate
 #to concat two numpy array
 from numpy import column_stack
+#to convert to json
+import json
 
 try:
 	#reading the data
-	data = read_csv('PythonFiles\weatherForecast.csv', header=0, index_col=0)
+	data = read_csv('PythonFiles\weatherForecastForWind.csv', header=0, index_col=0)
 
 	#separarting the data
 	featuresUsedToPredict = data.values[1:,:-1]
@@ -53,17 +55,19 @@ try:
 	inv_yhat = inv_yhat[:,-1]
 
 	#extracting the index dates for json
-	indexDate = data.index[1:].to_list()
+	indexDate = data.index.to_list()
 
 	#initilizing dictionary
 	preditctedWindData = {}
+	dateHour = []
 
 	#enumerating and appending
 	for i,date in enumerate(indexDate):
-		dateNew = date.split(' ')[1]
-		preditctedWindData[dateNew] = inv_yhat[i]
-
-	import json
+		 dateHour.append(date.split(':')[0])
+	
+	preditctedWindData['FullHour'] = indexDate[0]
+	preditctedWindData['Hour'] = dateHour[:-1]
+	preditctedWindData['value'] = inv_yhat.tolist()
 
 	myJson = json.dumps(preditctedWindData)
 	print(myJson)

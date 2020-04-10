@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 using SmartEnergy.Services;
 using SmartEnergy.ConfigClass;
 using SmartEnergy.ContractClass;
-
+using System.Collections.Generic;
 namespace SmartEnergy.Controllers
 {
     [ApiController]
@@ -36,21 +36,32 @@ namespace SmartEnergy.Controllers
         }
 
         [HttpGet("current-weather-report")]
-        public ActionResult<WeatherData> CurrentWeather()
+        public ActionResult<CurrentWeatherData> CurrentWeather()
         {
             return smartService.GetCurrentWeather();
         }
 
-        [HttpGet("predict-wind-speed")]
-        public ActionResult<string> PredictWindSpeed()
+
+        [HttpGet("predict/{modelName}")]
+        public ActionResult<PredictedData> PredictModel(string modelName)
         {
-            return smartService.PredictWind();
+            PredictedData predictedValue = smartService.Predict(modelName);
+            if (predictedValue == null)
+                return BadRequest();
+            else
+                return Ok(predictedValue);
         }
 
-        [HttpGet("predict-solar-energy")]
-        public ActionResult<string> PredictSolarEnergy()
+        [HttpGet("today-weather")]
+        public ActionResult<DailyWeather> GetHourlyWeather()
         {
-            return smartService.PredictSolarEnergy();
+            return Ok(smartService.HourlyWeatherData());
+        }
+
+        [HttpGet("weekly-weather")]
+        public ActionResult<IEnumerable<WeeklyWeather>> GetWeeklyWeather()
+        {
+            return Ok(smartService.WeeklyWeatherData());
         }
     }
 }

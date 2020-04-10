@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.IO;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 using SmartEnergy.ConfigClass;
 using SmartEnergy.ContractClass;
@@ -11,6 +12,8 @@ namespace SmartEnergy.Services
         private readonly string directory;
         private PythonFile pythonFile;
         private DirectorySetup directorySetup;
+        private string forSolar = "solar";
+        private string forWind = "wind";
         public SmartService(PythonFile pyFile, DirectorySetup dirSetup)
         {
             pythonFile = pyFile;
@@ -40,17 +43,33 @@ namespace SmartEnergy.Services
             }
         }
 
-        public WeatherData GetCurrentWeather()
+        public CurrentWeatherData GetCurrentWeather()
         {
-            return JsonConvert.DeserializeObject<WeatherData>(PythonExecuter(pythonFile.currentWeatherdata));
+            return JsonConvert.DeserializeObject<CurrentWeatherData>(PythonExecuter(pythonFile.currentWeatherdata));
         }
 
-        public string PredictSolarEnergy()
+        public PredictedData Predict(string modelName)
+        {
+            if(modelName.ToLower() == forSolar)
+            {
+                return JsonConvert.DeserializeObject<PredictedData>(PredictSolarEnergy());
+            }
+            if (modelName.ToLower() == forWind)
+            {
+                return JsonConvert.DeserializeObject<PredictedData>(PredictWind());
+            } 
+            else
+            {
+                return null;
+            }
+        }
+
+        private string PredictSolarEnergy()
         {
             return PythonExecuter(pythonFile.solarModel);
         }
 
-        public string PredictWind()
+        private string PredictWind()
         {
             return PythonExecuter(pythonFile.windModel);
         }
@@ -58,8 +77,16 @@ namespace SmartEnergy.Services
         public string GetWeatherForecast()
         {
             return PythonExecuter(pythonFile.weatherReport);
-
         }
 
+        public DailyWeather HourlyWeatherData()
+        {
+            return JsonConvert.DeserializeObject<DailyWeather>(PythonExecuter(pythonFile.hourlyWeatherData));
+        }
+
+        public IEnumerable<WeeklyWeather> WeeklyWeatherData()
+        {
+            return JsonConvert.DeserializeObject<IEnumerable<WeeklyWeather>>(PythonExecuter(pythonFile.weeklyWeatherData));
+        }
     }
 }
