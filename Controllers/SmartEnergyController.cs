@@ -4,6 +4,8 @@ using SmartEnergy.Services;
 using SmartEnergy.ConfigClass;
 using SmartEnergy.ContractClass;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+
 namespace SmartEnergy.Controllers
 {
     [ApiController]
@@ -22,9 +24,9 @@ namespace SmartEnergy.Controllers
         }
 
         [HttpGet("weather-forecast")]
-        public ActionResult<string> GetAction()
+        public async Task<ActionResult> GetWeatherForecast()
         {
-            string weatherData = smartService.GetWeatherForecast();
+            string weatherData = await smartService.GetWeatherForecastUsingNet();
             if (weatherData.Contains("success"))
             {
                 return Ok();
@@ -36,11 +38,18 @@ namespace SmartEnergy.Controllers
         }
 
         [HttpGet("current-weather-report")]
-        public ActionResult<CurrentWeatherData> CurrentWeather()
+        public async Task<ActionResult<CurrentWeatherData>> CurrentWeatherUsingNet()
         {
-            return smartService.GetCurrentWeather();
+            var resposne = await smartService.GetCurrentWeatherUsingNet();
+            if (resposne != null)
+            {
+                return Ok(resposne);
+            }
+            else
+            {
+                return BadRequest();
+            }
         }
-
 
         [HttpGet("predict/{modelName}")]
         public ActionResult<PredictedData> PredictModel(string modelName)
@@ -49,19 +58,42 @@ namespace SmartEnergy.Controllers
             if (predictedValue == null)
                 return BadRequest();
             else
+            {
                 return Ok(predictedValue);
+            }    
         }
 
         [HttpGet("today-weather")]
-        public ActionResult<DailyWeather> GetHourlyWeather()
+        public async Task<ActionResult<DailyWeather>> GetHourlyWeather()
         {
-            return Ok(smartService.HourlyWeatherData());
+            var todayWeather = await smartService.HourlyWeatherData();
+            if(todayWeather != null)
+            {
+                return Ok(todayWeather);
+            }
+            else
+            {
+                return BadRequest();
+            }
+            
         }
 
         [HttpGet("weekly-weather")]
-        public ActionResult<IEnumerable<WeeklyWeather>> GetWeeklyWeather()
+        public async Task<ActionResult<IEnumerable<WeeklyWeather>>> GetWeeklyWeather()
         {
-            return Ok(smartService.WeeklyWeatherData());
+            var weeklyWeather = await smartService.WeeklyWeatherData();
+            if(weeklyWeather == null)
+            {
+                BadRequest();
+            }
+            if(weeklyWeather.Count == 0)
+            {
+                return NotFound();
+            }
+            else
+            {
+                return Ok(weeklyWeather);
+            } 
         }
     }
 }
