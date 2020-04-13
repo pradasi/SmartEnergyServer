@@ -219,10 +219,10 @@ namespace SmartEnergy.Services
             currentWeatherData.dayOrNight = currentWeatherDataJson.dayOrNight;
             currentWeatherData.visibility = currentWeatherDataJson.visibility.ToString() + "%";
             currentWeatherData.pressure = currentWeatherDataJson.pressureAltimeter.ToString() + " in";
-            currentWeatherData.temperature = currentWeatherDataJson.temperature.ToString() + " F";
+            currentWeatherData.temperature = currentWeatherDataJson.temperature.ToString() + " \u2109";
             currentWeatherData.relativeHumidity = currentWeatherDataJson.relativeHumidity.ToString() + "%";
             currentWeatherData.windDirection = currentWeatherDataJson.windDirectionCardinal;
-            currentWeatherData.dewPoint = currentWeatherDataJson.temperatureDewPoint.ToString() + " F";
+            currentWeatherData.dewPoint = currentWeatherDataJson.temperatureDewPoint.ToString() + " \u2109";
             currentWeatherData.windSpeed = currentWeatherDataJson.windSpeed.ToString() + " mph";
             currentWeatherData.time = currentWeatherDataJson.validTimeLocal.ToString("HH:mm:ss");
             currentWeatherData.date = currentWeatherDataJson.validTimeLocal.ToString("dd MMM yyyy");
@@ -280,8 +280,8 @@ namespace SmartEnergy.Services
                         {
                             date = weeklyJson.validTimeLocal[numberofDays].ToString("dd MMM yyyy"),
                             day = weeklyJson.dayOfWeek[numberofDays],
-                            maxTemperature = weeklyJson.temperatureMax[numberofDays].ToString() + " F",
-                            minTemperature = weeklyJson.temperatureMin[numberofDays].ToString() + " F",
+                            maxTemperature = weeklyJson.temperatureMax[numberofDays].ToString() + " \u2109",
+                            minTemperature = weeklyJson.temperatureMin[numberofDays].ToString() + " \u2109",
                             weatherCondition = weeklyJson.narrative[numberofDays].Split(".")[0]
                         }
                     );
@@ -330,7 +330,7 @@ namespace SmartEnergy.Services
                             new HourlyWeatherData
                             {
                                 pressure = hourlyWeathers.pressureMeanSeaLevel[hourIndex].ToString() + " in",
-                                temperature = hourlyWeathers.temperature[hourIndex].ToString() + " F",
+                                temperature = hourlyWeathers.temperature[hourIndex].ToString() + " \u2109",
                                 time = hourlyWeathers.validTimeLocal[hourIndex].ToString("HH:mm:ss"),
                                 windSpeed = hourlyWeathers.windSpeed[hourIndex].ToString() + " mph",
                                 weatherCondition = hourlyWeathers.wxPhraseLong[hourIndex]
