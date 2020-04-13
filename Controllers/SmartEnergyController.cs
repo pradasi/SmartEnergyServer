@@ -27,11 +27,11 @@ namespace SmartEnergy.Controllers
             string weatherData = smartService.GetWeatherForecast();
             if (weatherData.Contains("success"))
             {
-                return Ok("Upadted Weather Forecast Successfully");
+                return Ok();
             }
             else
             {
-                return BadRequest("Could Not Upadte File");
+                return BadRequest();
             }
         }
 
