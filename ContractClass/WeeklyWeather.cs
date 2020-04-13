@@ -14,4 +14,13 @@ namespace SmartEnergy.ContractClass
         public string minTemperature { get; set; }
         public string weatherCondition { get; set; }
     }
+
+    public class WeeklyJson
+    {
+        public List<string> dayOfWeek { get; set; }
+        public List<string> narrative { get; set; }
+        public List<int?> temperatureMax { get; set; }
+        public List<int?> temperatureMin { get; set; }
+        public List<DateTime> validTimeLocal { get; set; }
+    }
 }

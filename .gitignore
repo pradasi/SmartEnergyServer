@@ -356,3 +356,5 @@ MigrationBackup/
 
 *.zip
 .vscode/
+
+PythonFiles/weatherForecast*

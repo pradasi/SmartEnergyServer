@@ -18,4 +18,21 @@ namespace SmartEnergy.ContractClass
         public string date { get; set; }
     }
 
+
+
+    public class CurrentWeather
+    {
+        public string cloudCoverPhrase { get; set; }
+        public string dayOfWeek { get; set; }
+        public string dayOrNight { get; set; }
+        public float pressureAltimeter { get; set; }
+        public int relativeHumidity { get; set; }
+        public int temperature { get; set; }
+        public int temperatureDewPoint { get; set; }
+        public DateTime validTimeLocal { get; set; }
+        public float visibility { get; set; }
+        public string windDirectionCardinal { get; set; }
+        public int windSpeed { get; set; }
+
+    }
 }
