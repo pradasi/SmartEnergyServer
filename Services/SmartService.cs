@@ -17,12 +17,15 @@ namespace SmartEnergy.Services
 {
     public class SmartService
     {
+        #region instance variables
         private readonly string prompt;
         private readonly string directory;
         private PythonFile pythonFile;
         private DirectorySetup directorySetup;
         private string forSolar = "solar";
         private string forWind = "wind";
+        #endregion
+        
         public SmartService(PythonFile pyFile, DirectorySetup dirSetup)
         {
             pythonFile = pyFile;
@@ -66,7 +69,7 @@ namespace SmartEnergy.Services
         private async Task<string> CallMeteoMatics()
         {
             string credentials = "cmrit_kumar:aM3OVy9uYz7Ei";
-            DateTime dt = DateTime.Now;
+            DateTime dt = DateTime.UtcNow;
             string datetime = dt.ToString("yyyy-MM-ddTHH:mm:ss+00:00");
 
             string formattedUrl = $"https://api.meteomatics.com/" + datetime + "P2D:PT1H/sun_elevation:d,sun_azimuth:d,t_2m:C,relative_humidity_1000hPa:p,sfc_pressure:hPa,global_rad:W/12.97210,77.59330/json";
@@ -82,7 +85,7 @@ namespace SmartEnergy.Services
             }
         }
 
-        private bool SplitDataWriteToCsv(SolarWeatherData responseData, WindWeatherData windData)
+        private async Task<bool> SplitAndWriteToSolarCsv(SolarWeatherData responseData)
         {
             try
             {
@@ -91,11 +94,13 @@ namespace SmartEnergy.Services
 
                 var elevation = responseData.data[0].coordinates[0].dates.Skip(1).Take(24).ToList().Select(data => data.value).ToList();
                 var azimuth = responseData.data[1].coordinates[0].dates.Skip(1).Take(24).ToList().Select(data => data.value).ToList();
-                var temperature = responseData.data[1].coordinates[0].dates.Skip(1).Take(24).ToList().Select(data => data.value).ToList();
-                var humidity = responseData.data[1].coordinates[0].dates.Skip(1).Take(24).ToList().Select(data => data.value).ToList();
-                var pressure = responseData.data[1].coordinates[0].dates.Skip(1).Take(24).ToList().Select(data => data.value).ToList();
-                var irrad = responseData.data[1].coordinates[0].dates.Skip(1).Take(24).ToList().Select(data => data.value).ToList();
-                var actualIrrad = responseData.data[1].coordinates[0].dates.Take(24).ToList().Select(data => data.value).ToList();
+                var temperature = responseData.data[2].coordinates[0].dates.Skip(1).Take(24).ToList().Select(data => data.value).ToList();
+                var humidity = responseData.data[3].coordinates[0].dates.Skip(1).Take(24).ToList().Select(data => data.value).ToList();
+                var pressure = responseData.data[4].coordinates[0].dates.Skip(1).Take(24).ToList().Select(data => data.value).ToList();
+                var irrad = responseData.data[5].coordinates[0].dates.Skip(1).Take(24).ToList().Select(data => data.value).ToList();
+
+                var actualIrrad = responseData.data[5].coordinates[0].dates.Take(24).ToList().Select(data => data.value).ToList();
+
                 var Time = responseData.data[0].coordinates[0].dates.Skip(1).Take(24).ToList().Select(data => data.date).ToList();
                 for (int timeIndex = 0; timeIndex < Time.Count; timeIndex++)
                 {
@@ -124,15 +129,29 @@ namespace SmartEnergy.Services
                 using (var writer = new StreamWriter(solarPath))
                 using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
                 {
-                    csv.WriteRecords(csvData);
+                    await csv.WriteRecordsAsync(csvData);
                 }
-
+                return true;
                 #endregion
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        private async Task<bool> SplitAndWriteToWindCsv(WindWeatherData windData, List<string> Time)
+        {
+            try
+            {
+                for (int timeIndex = 0; timeIndex < Time.Count; timeIndex++)
+                {
+                    Time[timeIndex] = Time[timeIndex].Split("T")[1].Split("Z")[0];
+                }
 
                 #region wind
                 List<WindCsvFormat> windCsvData = new List<WindCsvFormat>();
 
-                var time = Time;
                 var wtemperature = windData.temperature.Take(24).ToList();
                 var wDewPoint = windData.temperatureDewPoint.Take(24).ToList();
                 var wDirection = windData.windDirectionCardinal.Take(24).ToList();
@@ -164,13 +183,34 @@ namespace SmartEnergy.Services
                 using (var writer = new StreamWriter(windPath))
                 using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
                 {
-                    csv.WriteRecords(windCsvData);
+                    await csv.WriteRecordsAsync(windCsvData);
                 }
-
-                #endregion
                 return true;
+                #endregion
             }
-            catch (Exception ex)
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        private async Task<bool> SplitDataWriteToCsv(SolarWeatherData responseData, WindWeatherData windData)
+        {
+            try
+            {
+
+                bool solarCsvSuccess = await SplitAndWriteToSolarCsv(responseData);
+
+                var time = responseData.data[0].coordinates[0].dates.Skip(1).Take(24).ToList().Select(data => data.date).ToList();
+
+                bool windCsvSuccess = await SplitAndWriteToWindCsv(windData, time);
+
+                if (solarCsvSuccess && windCsvSuccess)
+                    return true;
+                else
+                    return false;
+            }
+            catch (Exception)
             {
                 return false;
             }
@@ -181,11 +221,9 @@ namespace SmartEnergy.Services
             SolarWeatherData responseData = JsonConvert.DeserializeObject<SolarWeatherData>(await CallMeteoMatics());
 
             string Windurl = $"https://api.weather.com/v3/wx/forecast/hourly/15day?apiKey=6532d6454b8aa370768e63d6ba5a832e&geocode=12.97%2C77.598&units=e&language=en-US&format=json";
-
-
             WindWeatherData windData = JsonConvert.DeserializeObject<WindWeatherData>(await CallHttClient(Windurl));
 
-            bool writtenSuccessful = SplitDataWriteToCsv(responseData, windData);
+            bool writtenSuccessful = await SplitDataWriteToCsv(responseData, windData);
 
             if (writtenSuccessful)
                 return "success";
@@ -200,7 +238,7 @@ namespace SmartEnergy.Services
             CurrentWeather currentWeatherDataJson = JsonConvert.DeserializeObject<CurrentWeather>(await CallHttClient(url));
             if (currentWeatherDataJson != null)
             {
-                CurrentWeatherData currentWeatherData = ExtractCurrentWeather(currentWeatherDataJson);
+                CurrentWeatherData currentWeatherData = await ExtractCurrentWeather(currentWeatherDataJson);
 
                 return currentWeatherData;
             }
@@ -210,10 +248,17 @@ namespace SmartEnergy.Services
             }
         }
 
-        private CurrentWeatherData ExtractCurrentWeather(CurrentWeather currentWeatherDataJson)
+        private async Task<CurrentWeatherData> ExtractCurrentWeather(CurrentWeather currentWeatherDataJson)
         {
             CurrentWeatherData currentWeatherData = new CurrentWeatherData();
 
+            await Task.Run(() => PopulateCurrentWeatherData(currentWeatherDataJson, currentWeatherData)) ;
+            
+            return currentWeatherData;
+        }
+
+        private void PopulateCurrentWeatherData(CurrentWeather currentWeatherDataJson, CurrentWeatherData currentWeatherData)
+        {
             currentWeatherData.cloudPhrase = currentWeatherDataJson.cloudCoverPhrase;
             currentWeatherData.dayOfWeek = currentWeatherDataJson.dayOfWeek;
             currentWeatherData.dayOrNight = currentWeatherDataJson.dayOrNight;
@@ -226,11 +271,9 @@ namespace SmartEnergy.Services
             currentWeatherData.windSpeed = currentWeatherDataJson.windSpeed.ToString() + " mph";
             currentWeatherData.time = currentWeatherDataJson.validTimeLocal.ToString("HH:mm:ss");
             currentWeatherData.date = currentWeatherDataJson.validTimeLocal.ToString("dd MMM yyyy");
-
-            return currentWeatherData;
-
         }
 
+        #region Prediction
         public PredictedData Predict(string modelName)
         {
             if (modelName.ToLower() == forSolar)
@@ -256,36 +299,24 @@ namespace SmartEnergy.Services
         {
             return PythonExecuter(pythonFile.windModel);
         }
-
+        #endregion
         public async Task<List<WeeklyWeather>> WeeklyWeatherData()
         {
             string urlForWeather = $"https://api.weather.com/v3/wx/forecast/daily/15day?apiKey=6532d6454b8aa370768e63d6ba5a832e&geocode=13.20%2C77.71&language=en-US&units=e&format=json";
 
             WeeklyJson weeklyJson = JsonConvert.DeserializeObject<WeeklyJson>(await CallHttClient(urlForWeather));
 
-            List<WeeklyWeather> weeklyWeathers = ExtractWeeklyWeathers(weeklyJson);
+            List<WeeklyWeather> weeklyWeathers = await ExtractWeeklyWeathers(weeklyJson);
 
             return weeklyWeathers;
         }
 
-        private List<WeeklyWeather> ExtractWeeklyWeathers(WeeklyJson weeklyJson)
+        private async Task<List<WeeklyWeather>> ExtractWeeklyWeathers(WeeklyJson weeklyJson)
         {
             List<WeeklyWeather> weeklyWeathers = new List<WeeklyWeather>();
             try
             {
-                for (int numberofDays = 1; numberofDays <= 7; numberofDays++)
-                {
-                    weeklyWeathers.Add(
-                        new WeeklyWeather
-                        {
-                            date = weeklyJson.validTimeLocal[numberofDays].ToString("dd MMM yyyy"),
-                            day = weeklyJson.dayOfWeek[numberofDays],
-                            maxTemperature = weeklyJson.temperatureMax[numberofDays].ToString() + " \u2109",
-                            minTemperature = weeklyJson.temperatureMin[numberofDays].ToString() + " \u2109",
-                            weatherCondition = weeklyJson.narrative[numberofDays].Split(".")[0]
-                        }
-                    );
-                }
+                await Task.Run(() => PopulateWeeklyWeather(weeklyJson, weeklyWeathers));
                 return weeklyWeathers;
             }
             catch (Exception)
@@ -295,50 +326,41 @@ namespace SmartEnergy.Services
 
         }
 
+        private void PopulateWeeklyWeather(WeeklyJson weeklyJson, List<WeeklyWeather> weeklyWeathers)
+        {
+            for (int numberofDays = 1; numberofDays <= 7; numberofDays++)
+            {
+                weeklyWeathers.Add(
+                    new WeeklyWeather
+                    {
+                        date = weeklyJson.validTimeLocal[numberofDays].ToString("dd MMM yyyy"),
+                        day = weeklyJson.dayOfWeek[numberofDays],
+                        maxTemperature = weeklyJson.temperatureMax[numberofDays].ToString() + " \u2109",
+                        minTemperature = weeklyJson.temperatureMin[numberofDays].ToString() + " \u2109",
+                        weatherCondition = weeklyJson.narrative[numberofDays].Split(".")[0]
+                    }
+                );
+            }
+        }
+
         public async Task<DailyWeather> HourlyWeatherData()
         {
             string urlForWeather = "https://api.weather.com/v3/wx/forecast/hourly/15day?apiKey=6532d6454b8aa370768e63d6ba5a832e&geocode=12.97%2C77.598&units=e&language=en-US&format=json";
 
             HourlyWeather hourlyWeathers =  JsonConvert.DeserializeObject<HourlyWeather>(await CallHttClient(urlForWeather));
 
-            DailyWeather dailyWeather = ExtractDailyWeather(hourlyWeathers);
+            DailyWeather dailyWeather = await ExtractDailyWeather(hourlyWeathers);
 
             return dailyWeather;
         }
 
-        private DailyWeather ExtractDailyWeather(HourlyWeather hourlyWeathers)
+        private async Task<DailyWeather> ExtractDailyWeather(HourlyWeather hourlyWeathers)
         {
-           
             try
             {
                 DailyWeather dailyWeather = new DailyWeather();
 
-                string today = hourlyWeathers.dayOfWeek[0];
-
-                int lastIndex = hourlyWeathers.dayOfWeek.LastIndexOf(today, 24);
-
-                int iterable = (lastIndex / 3) + 1;
-
-                dailyWeather.date = hourlyWeathers.validTimeLocal[0].ToString("dd MMM yyyy");
-                dailyWeather.day = today;
-
-                List<HourlyWeatherData> hourlyWeatherData = new List<HourlyWeatherData>();
-
-                for (int hourIndex = 0; hourIndex < lastIndex; hourIndex+=3)
-                {
-                    hourlyWeatherData.Add(
-                            new HourlyWeatherData
-                            {
-                                pressure = hourlyWeathers.pressureMeanSeaLevel[hourIndex].ToString() + " in",
-                                temperature = hourlyWeathers.temperature[hourIndex].ToString() + " \u2109",
-                                time = hourlyWeathers.validTimeLocal[hourIndex].ToString("HH:mm:ss"),
-                                windSpeed = hourlyWeathers.windSpeed[hourIndex].ToString() + " mph",
-                                weatherCondition = hourlyWeathers.wxPhraseLong[hourIndex]
-                            }
-                        );
-                }
-                
-                dailyWeather.data = hourlyWeatherData;
+                await Task.Run(() => PopulateDailyWeather(hourlyWeathers, dailyWeather));
 
                 return dailyWeather;
             }
@@ -346,7 +368,34 @@ namespace SmartEnergy.Services
             {
                 return null;
             }
+        }
 
+        private void PopulateDailyWeather(HourlyWeather hourlyWeathers, DailyWeather dailyWeather)
+        {
+            string today = hourlyWeathers.dayOfWeek[0];
+
+            int lastIndex = hourlyWeathers.dayOfWeek.LastIndexOf(today, 24);
+
+            dailyWeather.date = hourlyWeathers.validTimeLocal[0].ToString("dd MMM yyyy");
+            dailyWeather.day = today;
+
+            List<HourlyWeatherData> hourlyWeatherData = new List<HourlyWeatherData>();
+
+            for (int hourIndex = 0; hourIndex < lastIndex; hourIndex += 3)
+            {
+                hourlyWeatherData.Add(
+                        new HourlyWeatherData
+                        {
+                            pressure = hourlyWeathers.pressureMeanSeaLevel[hourIndex].ToString() + " in",
+                            temperature = hourlyWeathers.temperature[hourIndex].ToString() + " \u2109",
+                            time = hourlyWeathers.validTimeLocal[hourIndex].ToString("HH:mm:ss"),
+                            windSpeed = hourlyWeathers.windSpeed[hourIndex].ToString() + " mph",
+                            weatherCondition = hourlyWeathers.wxPhraseLong[hourIndex]
+                        }
+                    );
+            }
+
+            dailyWeather.data = hourlyWeatherData;
         }
     }
 }
