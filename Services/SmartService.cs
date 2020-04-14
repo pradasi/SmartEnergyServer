@@ -381,7 +381,7 @@ namespace SmartEnergy.Services
 
             List<HourlyWeatherData> hourlyWeatherData = new List<HourlyWeatherData>();
 
-            for (int hourIndex = 0; hourIndex < lastIndex; hourIndex += 3)
+            for (int hourIndex = 0; hourIndex < lastIndex; hourIndex ++)
             {
                 hourlyWeatherData.Add(
                         new HourlyWeatherData
