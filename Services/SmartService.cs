@@ -101,18 +101,11 @@ namespace SmartEnergy.Services
 
                 var actualIrrad = responseData.data[5].coordinates[0].dates.Take(24).ToList().Select(data => data.value).ToList();
 
-                var Time = responseData.data[0].coordinates[0].dates.Skip(1).Take(24).ToList().Select(data => data.date).ToList();
-                for (int timeIndex = 0; timeIndex < Time.Count; timeIndex++)
-                {
-                    Time[timeIndex] = Time[timeIndex].Split("T")[1].Split("Z")[0];
-                }
-
                 for (int csvIndex = 0; csvIndex < elevation.Count; csvIndex++)
                 {
                     csvData.Add(
                         new SolarCsvFormat
                         {
-                            Time = Time[csvIndex],
                             Elevation = elevation[csvIndex],
                             Azimuth = azimuth[csvIndex],
                             Temperature = temperature[csvIndex],
@@ -127,8 +120,8 @@ namespace SmartEnergy.Services
 
                 string solarPath = directorySetup.directory + pythonFile.solarCsv;
                 using (var writer = new StreamWriter(solarPath))
-                using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
                 {
+                    using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
                     await csv.WriteRecordsAsync(csvData);
                 }
                 return true;
@@ -140,15 +133,10 @@ namespace SmartEnergy.Services
             }
         }
 
-        private async Task<bool> SplitAndWriteToWindCsv(WindWeatherData windData, List<string> Time)
+        private async Task<bool> SplitAndWriteToWindCsv(WindWeatherData windData)
         {
             try
-            {
-                for (int timeIndex = 0; timeIndex < Time.Count; timeIndex++)
-                {
-                    Time[timeIndex] = Time[timeIndex].Split("T")[1].Split("Z")[0];
-                }
-
+            { 
                 #region wind
                 List<WindCsvFormat> windCsvData = new List<WindCsvFormat>();
 
@@ -159,21 +147,17 @@ namespace SmartEnergy.Services
                 var wPressure = windData.pressureMeanSeaLevel.Take(24).ToList();
                 var windSpeed = windData.windSpeed.Take(24).ToList();
 
-
                 for (int csvIndex = 0; csvIndex < wtemperature.Count; csvIndex++)
                 {
                     windCsvData.Add(
                         new WindCsvFormat
                         {
-
-                            DateTime = Time[csvIndex],
                             Temperature = wtemperature[csvIndex],
                             DewPoint = wDewPoint[csvIndex],
                             WindDirection = wDirection[csvIndex],
                             Humidity = wHumidity[csvIndex],
                             Pressure = wPressure[csvIndex],
                             WindSpeed = windSpeed[csvIndex],
-
                         }
                     );
                 }
@@ -181,8 +165,8 @@ namespace SmartEnergy.Services
                 string windPath = directorySetup.directory + pythonFile.windCsv;
 
                 using (var writer = new StreamWriter(windPath))
-                using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
                 {
+                    using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
                     await csv.WriteRecordsAsync(windCsvData);
                 }
                 return true;
@@ -194,36 +178,26 @@ namespace SmartEnergy.Services
             }
         }
 
-        private async Task<bool> SplitDataWriteToCsv(SolarWeatherData responseData, WindWeatherData windData)
-        {
-            try
-            {
-
-                bool solarCsvSuccess = await SplitAndWriteToSolarCsv(responseData);
-
-                var time = responseData.data[0].coordinates[0].dates.Skip(1).Take(24).ToList().Select(data => data.date).ToList();
-
-                bool windCsvSuccess = await SplitAndWriteToWindCsv(windData, time);
-
-                if (solarCsvSuccess && windCsvSuccess)
-                    return true;
-                else
-                    return false;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-        }
-
-        public async Task<string> GetWeatherForecastUsingNet()
+        public async Task<string> GetWeatherForecastSolar()
         {
             SolarWeatherData responseData = JsonConvert.DeserializeObject<SolarWeatherData>(await CallMeteoMatics());
 
+            
+            bool writtenSuccessful = await SplitAndWriteToSolarCsv(responseData);
+
+            if (writtenSuccessful)
+                return "success";
+            else
+                return "failure";
+        }
+
+        public async Task<string> GetWeatherForecastWind()
+        {
             string Windurl = $"https://api.weather.com/v3/wx/forecast/hourly/15day?apiKey=6532d6454b8aa370768e63d6ba5a832e&geocode=12.97%2C77.598&units=e&language=en-US&format=json";
+
             WindWeatherData windData = JsonConvert.DeserializeObject<WindWeatherData>(await CallHttClient(Windurl));
 
-            bool writtenSuccessful = await SplitDataWriteToCsv(responseData, windData);
+            bool writtenSuccessful = await SplitAndWriteToWindCsv(windData);
 
             if (writtenSuccessful)
                 return "success";

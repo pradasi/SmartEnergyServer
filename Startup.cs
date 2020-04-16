@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using SmartEnergy.ConfigClass;
+using SmartEnergy.Middleware;
 
 namespace SmartEnergy
 {
@@ -27,12 +29,15 @@ namespace SmartEnergy
             services.Configure<PythonFile>(Configuration.GetSection("PythonFile"));
             services.Configure<DirectorySetup>(Configuration.GetSection("DirectorySetup"));
         }
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            app.UseMiddleware<RequestResponseLoggingMiddleware>();
+
             app.UseSwagger();
 
             app.UseSwaggerUI(c =>
