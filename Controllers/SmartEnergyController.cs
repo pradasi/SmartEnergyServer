@@ -23,10 +23,23 @@ namespace SmartEnergy.Controllers
             smartService = new SmartService(pythonFiles, directorySetup);
         }
 
-        [HttpGet("weather-forecast")]
-        public async Task<ActionResult> GetWeatherForecast()
+        [HttpGet("weather-forecast-solar")]
+        public async Task<ActionResult> GetWeatherForecastSolar()
         {
-            string weatherData = await smartService.GetWeatherForecastUsingNet();
+            string weatherData = await smartService.GetWeatherForecastSolar();
+            if (weatherData.Contains("success"))
+            {
+                return Ok();
+            }
+            else
+            {
+                return BadRequest();
+            }
+        }
+        [HttpGet("weather-forecast-wind")]
+        public async Task<ActionResult> GetWeatherForecastWind()
+        {
+            string weatherData = await smartService.GetWeatherForecastWind();
             if (weatherData.Contains("success"))
             {
                 return Ok();

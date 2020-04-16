@@ -33,7 +33,6 @@ namespace SmartEnergy.ContractClass
 
     public class SolarCsvFormat
     {
-        public string Time { get; set; }
         public string Elevation { get; set; }
         public string Azimuth { get; set; }
         public string Temperature { get; set; }
@@ -57,7 +56,6 @@ namespace SmartEnergy.ContractClass
 
     public class WindCsvFormat
     {
-        public string DateTime { get; set; }
         public int Temperature { get; set; }
         public int DewPoint { get; set; }
         public string WindDirection { get; set; }

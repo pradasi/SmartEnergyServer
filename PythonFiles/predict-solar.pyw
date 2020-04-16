@@ -1,3 +1,6 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
 #to load the model
 from tensorflow.keras.models import load_model
 #csv reading
@@ -10,10 +13,13 @@ from numpy import concatenate
 from numpy import column_stack
 #to convert to json
 import json
+#for datetime
+import datetime as dt
+#to disable debug
 
 try:
 	
-	data = read_csv('PythonFiles\weatherForecastForSolar.csv', header=0, index_col=0)
+	data = read_csv('PythonFiles\weatherForecastForSolar.csv', header=0)
 	
 	#separarting the data
 	featuresUsedToPredict = data.values[:,:-2]
@@ -56,11 +62,14 @@ try:
 
 	#for date
 	dateHour = []
-	#enumerating and appending
-	for i,date in enumerate(indexDate):
-		dateHour.append(date.split(":")[0])
+	now= dt.datetime.now()
+	date_list = [now + dt.timedelta(minutes=60*x) for x in range(0, 24)]
+	fullHour = (now + dt.timedelta(minutes=60*1)).strftime("%H:%M")
+	indexDate =[x.strftime("%H") for x in date_list]
 
-	preditctedSolarData['FullHour'] = indexDate[0]
+	dateHour = indexDate[1:]
+
+	preditctedSolarData['FullHour'] = fullHour
 	preditctedSolarData['Hour'] = dateHour
 	preditctedSolarData['value'] = solarEnergy.tolist()
 	

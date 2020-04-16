@@ -1,3 +1,6 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
 #to load the model
 from tensorflow.keras.models import load_model
 #to read the data in csv
@@ -12,10 +15,14 @@ from numpy import concatenate
 from numpy import column_stack
 #to convert to json
 import json
+#for datetime
+import datetime as dt
+#to disable debug
+
 
 try:
 	#reading the data
-	data = read_csv('PythonFiles\weatherForecastForWind.csv', header=0, index_col=0)
+	data = read_csv('PythonFiles\weatherForecastForWind.csv', header=0)
 
 	#separarting the data
 	featuresUsedToPredict = data.values[1:,:-1]
@@ -60,12 +67,14 @@ try:
 	#initilizing dictionary
 	preditctedWindData = {}
 	dateHour = []
+	now= dt.datetime.now()
+	date_list = [now + dt.timedelta(minutes=60*x) for x in range(0, 24)]
+	fullHour = (now + dt.timedelta(minutes=60*1)).strftime("%H:%M")
+	indexDate =[x.strftime("%H") for x in date_list]
 
-	#enumerating and appending
-	for i,date in enumerate(indexDate):
-		 dateHour.append(date.split(':')[0])
+	dateHour = indexDate[1:]
 	
-	preditctedWindData['FullHour'] = indexDate[0]
+	preditctedWindData['FullHour'] = fullHour
 	preditctedWindData['Hour'] = dateHour[:-1]
 	preditctedWindData['value'] = inv_yhat.tolist()
 
