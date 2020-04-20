@@ -34,6 +34,11 @@ namespace SmartEnergy.Services
             directory = directorySetup.directory;
         }
 
+        public string InitTf()
+        {
+            return PythonExecuter(pythonFile.init);
+        }
+
         private string PythonExecuter(string fileName)
         {
             string cmd = prompt;
@@ -205,7 +210,7 @@ namespace SmartEnergy.Services
                 return "failure";
         }
 
-        public async Task<CurrentWeatherData> GetCurrentWeatherUsingNet()
+        public async Task<CurrentWeatherData> GetCurrentWeather()
         {
             string url = $"https://api.weather.com/v3/wx/observations/current?apiKey=6532d6454b8aa370768e63d6ba5a832e&geocode=12.97%2C77.598&units=e&language=en-US&format=json";
 
