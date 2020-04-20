@@ -5,8 +5,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using Serilog;
 using SmartEnergy.ConfigClass;
 using SmartEnergy.Middleware;
+using StackifyLib;
+using StackifyLib.CoreLogger;
 
 namespace SmartEnergy
 {
@@ -15,6 +18,7 @@ namespace SmartEnergy
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+            //StackifyLib.Utils.StackifyAPILogger.LogEnabled = true;
         }
 
         public IConfiguration Configuration { get; }
@@ -38,7 +42,11 @@ namespace SmartEnergy
 
             app.UseMiddleware<RequestResponseLoggingMiddleware>();
 
+            app.UseExceptionHandlingMiddleware();
+
             app.UseSwagger();
+
+            app.UseSerilogRequestLogging();
 
             app.UseSwaggerUI(c =>
             {
@@ -58,6 +66,9 @@ namespace SmartEnergy
             {
                 endpoints.MapControllers();
             });
+
+            //loggerFactory.AddStackify();
+            //app.ConfigureStackifyLogging(Configuration);
         }
     }
 }

@@ -1,22 +1,19 @@
-#See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
-
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-buster-slim AS base
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build
 WORKDIR /app
 EXPOSE 80
-EXPOSE 443
 
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1-buster AS build
+# copy csproj and restore as distinct layers
 WORKDIR /src
-COPY ["SmartEnergy.csproj", ""]
-RUN dotnet restore "./SmartEnergy.csproj"
+COPY SmartEnergy.csproj .
+RUN dotnet restore
+
+# copy and publish app and libraries
 COPY . .
-WORKDIR "/src/."
-RUN dotnet build "SmartEnergy.csproj" -c Release -o /app/build
+RUN dotnet publish -c release -o /app
 
-FROM build AS publish
-RUN dotnet publish "SmartEnergy.csproj" -c Release -o /app/publish
-
-FROM base AS final
+FROM mcr.microsoft.com/dotnet/core/aspnet:3.1
 WORKDIR /app
-COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "SmartEnergy.dll"]
+COPY --from=build /app .
+COPY ./entrypoint.sh /app
+RUN chmod +x /app/entrypoint.sh
+CMD [ "/app/entrypoint.sh" ]
