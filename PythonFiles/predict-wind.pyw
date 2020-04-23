@@ -30,7 +30,7 @@ try:
 
 	#encoding wind direction
 	encoder = LabelEncoder()
-	featuresUsedToPredict[:, 2] = encoder.fit_transform(featuresUsedToPredict[:,2])
+	featuresUsedToPredict[:, 1] = encoder.fit_transform(featuresUsedToPredict[:,1])
 
 	#ensure all data is float
 	featuresUsedToPredict = featuresUsedToPredict.astype('float32')
