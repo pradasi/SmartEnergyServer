@@ -12,15 +12,11 @@ namespace SmartEnergy.Controllers
     [Route("api/[controller]")]
     public class SmartEnergyController : ControllerBase
     {
-        public PythonFile pythonFiles;
-        public DirectorySetup directorySetup;
         public SmartService smartService;
 
-        public SmartEnergyController(IOptions<PythonFile> pyFiles, IOptions<DirectorySetup> dirSetup )
+        public SmartEnergyController(IOptions<PythonFile> pyFiles, IOptions<DirectorySetup> dirSetup, IOptions<Credentials> credentials )
         {
-            pythonFiles = pyFiles.Value;
-            directorySetup = dirSetup.Value;
-            smartService = new SmartService(pythonFiles, directorySetup);
+            smartService = new SmartService(pyFiles.Value, dirSetup.Value, credentials.Value);
         }
 
         [HttpGet("init")]

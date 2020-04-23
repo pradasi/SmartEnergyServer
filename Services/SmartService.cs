@@ -24,14 +24,16 @@ namespace SmartEnergy.Services
         private DirectorySetup directorySetup;
         private string forSolar = "solar";
         private string forWind = "wind";
+        private readonly string access;
         #endregion
         
-        public SmartService(PythonFile pyFile, DirectorySetup dirSetup)
+        public SmartService(PythonFile pyFile, DirectorySetup dirSetup, Credentials creds)
         {
             pythonFile = pyFile;
             directorySetup = dirSetup;
             prompt = directorySetup.prompt;
             directory = directorySetup.directory;
+            access = creds.username + ":" + creds.password;
         }
 
         public string InitTf()
@@ -73,7 +75,7 @@ namespace SmartEnergy.Services
 
         private async Task<string> CallMeteoMatics()
         {
-            string credentials = "cmrit_kumar:aM3OVy9uYz7Ei";
+            string credentials = access; //"cmrit_kumar:aM3OVy9uYz7Ei";
             DateTime dt = DateTime.UtcNow;
             string datetime = dt.ToString("yyyy-MM-ddTHH:mm:ss+00:00");
 
@@ -81,13 +83,21 @@ namespace SmartEnergy.Services
             HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(formattedUrl);
             request.Headers.Add("Authorization", "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes(credentials)));
             request.PreAuthenticate = true;
-            WebResponse response = await request.GetResponseAsync();
-
-            using (var reader = new StreamReader(response.GetResponseStream()))
+            try
             {
-                string responseText = reader.ReadToEnd();
-                return responseText;
+                HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync();
+
+                using (var reader = new StreamReader(response.GetResponseStream()))
+                {
+                    string responseText = reader.ReadToEnd();
+                    return responseText;
+                }
             }
+            catch (Exception)
+            {
+                return "failure";
+            }
+           
         }
 
         private async Task<bool> SplitAndWriteToSolarCsv(SolarWeatherData responseData)
@@ -146,7 +156,6 @@ namespace SmartEnergy.Services
                 List<WindCsvFormat> windCsvData = new List<WindCsvFormat>();
 
                 var wtemperature = windData.temperature.Take(24).ToList();
-                var wDewPoint = windData.temperatureDewPoint.Take(24).ToList();
                 var wDirection = windData.windDirectionCardinal.Take(24).ToList();
                 var wHumidity = windData.relativeHumidity.Take(24).ToList();
                 var wPressure = windData.pressureMeanSeaLevel.Take(24).ToList();
@@ -158,7 +167,6 @@ namespace SmartEnergy.Services
                         new WindCsvFormat
                         {
                             Temperature = wtemperature[csvIndex],
-                            DewPoint = wDewPoint[csvIndex],
                             WindDirection = wDirection[csvIndex],
                             Humidity = wHumidity[csvIndex],
                             Pressure = wPressure[csvIndex],
@@ -185,15 +193,21 @@ namespace SmartEnergy.Services
 
         public async Task<string> GetWeatherForecastSolar()
         {
-            SolarWeatherData responseData = JsonConvert.DeserializeObject<SolarWeatherData>(await CallMeteoMatics());
+            var responseMessage = await CallMeteoMatics();
+            if (!responseMessage.Contains("failure"))
+            {
+                SolarWeatherData responseData = JsonConvert.DeserializeObject<SolarWeatherData>(responseMessage);
+                bool writtenSuccessful = await SplitAndWriteToSolarCsv(responseData);
 
-            
-            bool writtenSuccessful = await SplitAndWriteToSolarCsv(responseData);
-
-            if (writtenSuccessful)
-                return "success";
+                if (writtenSuccessful)
+                    return "success";
+                else
+                    return "failure";
+            }
             else
+            {
                 return "failure";
+            }
         }
 
         public async Task<string> GetWeatherForecastWind()

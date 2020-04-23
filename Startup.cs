@@ -18,7 +18,7 @@ namespace SmartEnergy
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
-            //StackifyLib.Utils.StackifyAPILogger.LogEnabled = true;
+            StackifyLib.Utils.StackifyAPILogger.LogEnabled = true;
         }
 
         public IConfiguration Configuration { get; }
@@ -32,6 +32,7 @@ namespace SmartEnergy
             });
             services.Configure<PythonFile>(Configuration.GetSection("PythonFile"));
             services.Configure<DirectorySetup>(Configuration.GetSection("DirectorySetup"));
+            services.Configure<Credentials>(Configuration.GetSection("Credentials"));
         }
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
@@ -67,8 +68,8 @@ namespace SmartEnergy
                 endpoints.MapControllers();
             });
 
-            //loggerFactory.AddStackify();
-            //app.ConfigureStackifyLogging(Configuration);
+            loggerFactory.AddStackify();
+            app.ConfigureStackifyLogging(Configuration);
         }
     }
 }

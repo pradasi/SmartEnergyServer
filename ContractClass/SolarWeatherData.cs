@@ -47,7 +47,6 @@ namespace SmartEnergy.ContractClass
     public class WindWeatherData
     {
         public List<int> temperature { get; set; }
-        public List<int> temperatureDewPoint { get; set; }
         public List<string> windDirectionCardinal { get; set; }
         public List<int> relativeHumidity { get; set; }
         public List<float> pressureMeanSeaLevel { get; set; }
@@ -57,7 +56,6 @@ namespace SmartEnergy.ContractClass
     public class WindCsvFormat
     {
         public int Temperature { get; set; }
-        public int DewPoint { get; set; }
         public string WindDirection { get; set; }
         public int Humidity { get; set; }
         public float Pressure { get; set; }
