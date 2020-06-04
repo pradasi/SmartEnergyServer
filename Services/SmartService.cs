@@ -271,11 +271,11 @@ namespace SmartEnergy.Services
         {
             if (modelName.ToLower() == forSolar)
             {
-                return JsonConvert.DeserializeObject<PredictedData>(PredictSolarEnergy());
+                return JsonConvert.DeserializeObject<PredictedData>(PredictModel(pythonFile.predictedSolar, pythonFile.solarModel));
             }
             if (modelName.ToLower() == forWind)
             {
-                return JsonConvert.DeserializeObject<PredictedData>(PredictWind());
+                return JsonConvert.DeserializeObject<PredictedData>(PredictModel(pythonFile.predictedWind, pythonFile.windModel));
             }
             else
             {
@@ -283,14 +283,23 @@ namespace SmartEnergy.Services
             }
         }
 
-        private string PredictSolarEnergy()
+        private string PredictModel(string fileName, string modelFileName)
         {
-            return PythonExecuter(pythonFile.solarModel);
-        }
-
-        private string PredictWind()
-        {
-            return PythonExecuter(pythonFile.windModel);
+            string dataFileName = directory + fileName;
+            string predictedData = null;
+            if (checkFileExists(dataFileName) && !checkFileModifiedHourDifferenceIsGreaterThanHour(dataFileName))
+            {
+                using (StreamReader stream = new StreamReader(dataFileName))
+                {
+                    predictedData = stream.ReadToEnd();
+                }
+            }
+            else
+            {
+                predictedData = PythonExecuter(modelFileName);
+                File.WriteAllText(dataFileName, predictedData);
+            }
+            return predictedData;
         }
         #endregion
         public async Task<List<WeeklyWeather>> WeeklyWeatherData()
@@ -389,6 +398,27 @@ namespace SmartEnergy.Services
             }
 
             dailyWeather.data = hourlyWeatherData;
+        }
+
+        private bool checkFileExists(string fileName)
+        {
+            return File.Exists(fileName);
+        }
+
+        private bool checkFileModifiedHourDifferenceIsGreaterThanHour(string fileName)
+        {
+            DateTime currentTime = DateTime.Now;
+            DateTime lastModified = File.GetLastWriteTime(fileName);
+            double differenceInHours = currentTime.Subtract(lastModified).TotalHours;
+            if(differenceInHours >= 1)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+
         }
     }
 }

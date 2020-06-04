@@ -7,5 +7,8 @@
         public string windCsv { get; set; }
         public string solarCsv { get; set; }
         public string init { get; set; }
+        public string predictedSolar { get; set; }
+        public string predictedWind { get; set; }
+
     }
 }

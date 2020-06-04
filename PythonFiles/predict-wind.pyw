@@ -34,6 +34,7 @@ try:
 
 	#ensure all data is float
 	featuresUsedToPredict = featuresUsedToPredict.astype('float32')
+	prevWindData = prevWindData.astype('float32')
 
 	#creating object of scaler
 	scaler = MinMaxScaler(feature_range=(0, 1))
