@@ -47,6 +47,7 @@ namespace SmartEnergy.Controllers
                 return BadRequest();
             }
         }
+
         [HttpGet("weather-forecast-wind")]
         public async Task<ActionResult> GetWeatherForecastWind()
         {
@@ -118,6 +119,20 @@ namespace SmartEnergy.Controllers
             {
                 return Ok(weeklyWeather);
             } 
+        }
+
+        [HttpGet("calculate-power")]
+        public ActionResult<PredictedData> GetCalculatedPower()
+        {
+            PredictedData predictedValue = smartService.CalculatePower();
+            if (predictedValue != null)
+            {
+                return Ok(predictedValue);
+            }
+            else
+            {
+                return BadRequest();
+            }
         }
     }
 }

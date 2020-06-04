@@ -148,6 +148,77 @@ namespace SmartEnergy.Services
             }
         }
 
+        public PredictedData CalculatePower()
+        {
+            string solarFilePath = directory + pythonFile.predictedSolar;
+            string windFilePath = directory + pythonFile.predictedWind;
+            try
+            {
+                PredictedData solarData = ReadFileAndGetData(solarFilePath);
+                PredictedData windData = ReadFileAndGetData(windFilePath);
+                PredictedData calculatedElectricity = ComputeElectricity(solarData, windData);
+                return calculatedElectricity;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        private PredictedData ComputeElectricity(PredictedData solarData, PredictedData windData)
+        {
+            try
+            {
+                double areaOfSolar = 4046.86 * 15771.5;
+                double efficienyOfSolarPanel = 0.12;
+                double radius = 41.25;
+                double airDensity = 1.2;
+                double windEfficieny = 0.40;
+                int totalWorkingTurbines = 60;
+                List<double> solarEnergy = solarData.value.ToList();
+                List<double> windSpeed = windData.value.ToList();
+            
+                PredictedData calculatedElectricity = new PredictedData();
+                calculatedElectricity.fullHour = solarData.fullHour;
+                calculatedElectricity.hour = solarData.hour;
+
+                List<double> electricty = new List<double>();
+            
+                for (int hourIterator = 0; hourIterator < 23; hourIterator++)
+                {
+                    double solarElectricity = (areaOfSolar * efficienyOfSolarPanel * solarEnergy[hourIterator] )/ (Math.Pow(10, 6));
+                    double windElectricity = ((Math.PI / 2) * Math.Pow(radius, 2) * Math.Pow(windSpeed[hourIterator], 3) * windEfficieny * airDensity * totalWorkingTurbines) / (Math.Pow(10, 6));
+                    double sum = (solarElectricity + windElectricity);
+                    electricty.Add(sum);
+                }
+                calculatedElectricity.value = electricty;
+                return calculatedElectricity;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        private static PredictedData ReadFileAndGetData(string filePath)
+        {
+            PredictedData data = null;
+            try
+            {
+                using (StreamReader stream = new StreamReader(filePath))
+                {
+                    var predicteddData = stream.ReadToEnd();
+                    data = JsonConvert.DeserializeObject<PredictedData>(predicteddData);
+                }
+            }
+            catch(Exception)
+            {
+                throw new Exception();
+            }
+
+            return data;
+        }
+
         private async Task<bool> SplitAndWriteToWindCsv(WindWeatherData windData)
         {
             try

@@ -5,6 +5,6 @@ namespace SmartEnergy.ContractClass
     {
         public string fullHour { get; set; }
         public IEnumerable<int> hour { get; set; }
-        public IEnumerable<float> value { get; set; }
+        public IEnumerable<double> value { get; set; }
     }
 }
